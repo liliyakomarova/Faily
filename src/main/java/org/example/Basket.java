@@ -1,9 +1,12 @@
 package org.example;
+import com.google.gson.Gson;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.FileWriter;
 
 public class Basket {
     private String[] product = {"Молоко ", "Хлеб ", "Рис "};
@@ -30,10 +33,6 @@ public class Basket {
         System.out.println("Ваша корзина: ");
         for (int i = 0; i < numberOfProduct.length; i++) {
             if (sumProducts[i] != 0) {
-            }
-        }
-        for (int i = 0; i < numberOfProduct.length; i++) {
-            if (sumProducts[i] != 0) {
                 System.out.println(numbers[i] + " " + product[i] + " " + sumProducts[i] + " штук, " + "цена " +
                         prices[i] + " руб/штука, " + "Всего " + (prices[i] * sumProducts[i]) + " руб");
             }
@@ -41,33 +40,37 @@ public class Basket {
         System.out.println("Итого " + priceOfGoods + " руб");
     }
 
-    public void saveTxt(File textfile) throws IOException {
-        try (PrintWriter out = new PrintWriter(textfile);) {
-            for (int i = 0; i < numberOfProduct.length; i++) {
-                if (sumProducts[i] != 0) {
-                    String s = numbers[i] + " " + product[i] + " " + sumProducts[i] + " штук, " + "цена " +
-                            prices[i] + " руб/штука, " + "Всего " + (prices[i] * sumProducts[i]) + " руб";
-                    out.write(s + "\n");
+    public Basket serialization(File file) throws IOException {
+        Basket basket = new Basket();
+        JSONObject obj = new JSONObject();
+        for (int i = 0; i < numberOfProduct.length; i++) {
+            if (sumProducts[i] != 0) {
+                obj.put("number", numbers[i]);
+                obj.put("name of product", product[i]);
+                obj.put("amount", sumProducts[i]);
+                obj.put("price", prices[i]);
+                obj.put("general sum", prices[i] * sumProducts[i]);
+                try (FileWriter files = new FileWriter(file, true)) {
+                    files.write(obj.toString());
+                    files.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-            out.write("Итого: ");
-            String result = priceOfGoods + " руб";
-            out.write(result + "\n");
-        } catch (IOException e) {
-            throw new RuntimeException();
         }
+
+        return basket;
     }
 
-    public static Basket loadFromTxtFile(File textfile) throws IOException {
+    public static Basket deserialization(File file) throws IOException, ClassNotFoundException {
         Basket basket = new Basket();
-        try (InputStreamReader in = new InputStreamReader(new FileInputStream(textfile), StandardCharsets.UTF_8)) {
-            System.out.println("Считываем:");
-            while (in.ready()) {
-                char read = (char) in.read();
-                System.out.print(read);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        JSONParser parser = new JSONParser();
+        try {
+            Object obj = parser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) obj;
+            System.out.println(jsonObject);
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
         }
         return basket;
     }
